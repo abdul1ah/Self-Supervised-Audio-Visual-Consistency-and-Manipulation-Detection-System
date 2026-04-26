@@ -6,6 +6,7 @@ import torchvision.models as models
 class VisualEncoder(nn.Module):
     def __init__(self, embed_dim=256):
         super(VisualEncoder, self).__init__()
+        
         self.backbone = models.video.r3d_18(weights=models.video.R3D_18_Weights.DEFAULT)
         
         in_features = self.backbone.fc.in_features
