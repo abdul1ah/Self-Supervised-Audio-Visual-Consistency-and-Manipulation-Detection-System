@@ -55,6 +55,16 @@ class AudioVisualDataset(Dataset):
             shift_columns = shift * 10 
             spectrogram = np.roll(spectrogram, shift=shift_columns, axis=1)
 
+        TARGET_AUDIO_LENGTH = 300 
+        current_length = spectrogram.shape[1]
+
+        if current_length < TARGET_AUDIO_LENGTH:
+            padding = TARGET_AUDIO_LENGTH - current_length
+            spectrogram = np.pad(spectrogram, ((0, 0), (0, padding)), mode='constant')
+        elif current_length > TARGET_AUDIO_LENGTH:
+            spectrogram = spectrogram[:, :TARGET_AUDIO_LENGTH]
+
+
         audio_tensor = torch.tensor(spectrogram, dtype=torch.float32).unsqueeze(0)
 
         return visual_tensor, audio_tensor, label

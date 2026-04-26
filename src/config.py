@@ -3,22 +3,21 @@ import os
 # ==============================================================================
 # PATH CONFIGURATION
 # ==============================================================================
-
-# root of the mounted Google Drive in Colab
 DRIVE_ROOT = '/content/drive/MyDrive/DNN_Project'
 
+DATA_DIR = '/content/local_dataset' 
 
-DATA_DIR = os.path.join(DRIVE_ROOT, 'dataset')
 AUDIO_DIR = os.path.join(DATA_DIR, 'audio')
 FRAMES_DIR = os.path.join(DATA_DIR, 'frames')
 SPECTROGRAMS_DIR = os.path.join(DATA_DIR, 'spectrograms')
+METADATA_CSV = os.path.join(DATA_DIR, 'metadata.csv')
+
+checkpoint_dir = os.path.join(DRIVE_ROOT, 'checkpoints')
+os.makedirs(checkpoint_dir, exist_ok=True)
+
 TRAIN_CSV = os.path.join(DATA_DIR, 'train_metadata.csv')
 VAL_CSV = os.path.join(DATA_DIR, 'val_metadata.csv')
 TEST_CSV = os.path.join(DATA_DIR, 'test_metadata.csv')
-
-# Checkpoint saving directory
-CHECKPOINT_DIR = os.path.join(DRIVE_ROOT, 'checkpoints')
-os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 
 # ==============================================================================

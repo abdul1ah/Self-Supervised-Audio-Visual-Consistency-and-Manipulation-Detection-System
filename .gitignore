@@ -12,3 +12,8 @@ spectrograms/
 
 *.ini
 */tempCodeRunnerFile.py
+*.pyc
+__pycache__/
+*.ipynb_checkpoints
+*.zip
+*.tar.gz
