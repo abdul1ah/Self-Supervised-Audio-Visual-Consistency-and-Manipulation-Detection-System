@@ -12,8 +12,8 @@ FRAMES_DIR = os.path.join(DATA_DIR, 'frames')
 SPECTROGRAMS_DIR = os.path.join(DATA_DIR, 'spectrograms')
 METADATA_CSV = os.path.join(DATA_DIR, 'metadata.csv')
 
-checkpoint_dir = os.path.join(DRIVE_ROOT, 'checkpoints')
-os.makedirs(checkpoint_dir, exist_ok=True)
+CHECKPOINT_DIR = os.path.join(DRIVE_ROOT, 'checkpoints')
+os.makedirs(CHECKPOINT_DIR, exist_ok=True)
 
 TRAIN_CSV = os.path.join(DATA_DIR, 'train_metadata.csv')
 VAL_CSV = os.path.join(DATA_DIR, 'val_metadata.csv')
