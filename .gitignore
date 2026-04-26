@@ -1,2 +1,14 @@
 ##ignore all csv files
 *.csv
+
+##ignore all the audio files
+audio/
+##ignore all the frames
+frames/
+##ignore all the spectrograms
+spectrograms/
+*.mp4
+*.mp4.*
+
+*.ini
+*/tempCodeRunnerFile.py
