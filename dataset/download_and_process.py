@@ -33,15 +33,17 @@ for _, row in df.iterrows():
         continue
 
     try:
-            # download segment
             subprocess.run([
                 "yt-dlp",
                 "--download-sections", f"*{start}-{end}",
                 "-f", "bestvideo[height<=360]+bestaudio/best",
                 "--merge-output-format", "mp4",
+                "--socket-timeout", "15",
+                "--retries", "2",     
+                "--abort-on-error",         
                 "-o", video_path,
                 url
-            ], check=True, timeout=180)  
+            ], check=True, timeout=120) 
 
             # extract audio
             subprocess.run([
@@ -77,7 +79,7 @@ for _, row in df.iterrows():
     except Exception as e:
         print(f"[FAILED] {vid} | {e}")
         failed += 1
-
+        os.system("taskkill /F /IM ffmpeg.exe /T >nul 2>&1")
 print("\n----------SUMMARY-----------")
 print(f"Total entries     : {total}")
 print(f"Successful        : {success}")
