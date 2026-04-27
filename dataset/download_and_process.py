@@ -56,7 +56,7 @@ for _, row in df.iterrows():
             subprocess.run([
                 "ffmpeg", "-y",
                 "-i", video_path,
-                "-vf", "fps=2",
+                "-vf", "fps=15",
                 f"frames/{vid}_%03d.jpg"
             ], check=True, timeout=120)   
 

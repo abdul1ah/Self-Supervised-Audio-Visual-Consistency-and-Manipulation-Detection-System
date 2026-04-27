@@ -6,11 +6,14 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc
 from config import *
 from dataset import get_dataloader
 from models import AudioVisualFusion
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import roc_curve
 
 def main():
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"🔬 Starting Evaluation on device: {device}\n")
+    print(f"Starting Evaluation on device: {device}\n")
 
     checkpoint_path = os.path.join(CHECKPOINT_DIR, 'best_model.pth')
     if not os.path.exists(checkpoint_path):
@@ -80,6 +83,36 @@ def main():
     print(f"False Positives (Tricked! Guessed Match wrongly):  {false_positives}")
     print(f"False Negatives (Missed it! Guessed Mismatch):     {false_negatives}")
     print("="*50 + "\n")
+
+    print("Generating visual plots...")
+    
+    fpr, tpr, thresholds = roc_curve(all_labels, all_probs)
+    plt.figure(figsize=(8, 6))
+
+    plt.plot(fpr, tpr, label=f'Model ROC (AUC = {roc_auc:.4f})', linewidth=2)
+    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
+    
+    plt.xlabel('False Positive Rate (Mistaking a Mismatch for a Match)')
+    plt.ylabel('True Positive Rate (Successfully finding a Match)')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    plt.grid(alpha=0.3)
+    
+    roc_path = os.path.join(CHECKPOINT_DIR, 'roc_curve.png')
+    plt.savefig(roc_path, bbox_inches='tight')
+    plt.close()
+    
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=['Pred: Mismatch', 'Pred: Match'], 
+                yticklabels=['Actual: Mismatch', 'Actual: Match'])
+    plt.title('Confusion Matrix')
+    
+    cm_path = os.path.join(CHECKPOINT_DIR, 'confusion_matrix.png')
+    plt.savefig(cm_path, bbox_inches='tight')
+    plt.close()
+
+    print(f"Visuals saved to Drive inside the checkpoints folder!")
 
 if __name__ == "__main__":
     main()

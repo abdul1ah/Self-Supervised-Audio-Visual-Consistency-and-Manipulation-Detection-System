@@ -37,7 +37,7 @@ def main():
     val_loader = get_dataloader(VAL_CSV, batch_size=BATCH_SIZE, shuffle=False)
     
     model = AudioVisualFusion().to(device)
-    criterion = AudioVisualLoss()
+    criterion = AudioVisualLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     best_val_loss = float('inf')

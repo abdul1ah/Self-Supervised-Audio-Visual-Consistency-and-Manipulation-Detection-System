@@ -30,21 +30,19 @@ df = df[df['YouTube_ID'].isin(valid_ids)]
 video_ids = df['YouTube_ID'].tolist()
 labels_map = dict(zip(df['YouTube_ID'], df['label']))
 
-# generate metadata for audio-visual pairing and labeling
 metadata = []
 
 for vid in video_ids:
 
-    # positive pair (same video, same class)
-    metadata.append({
-        "video_id": vid,
-        "audio_id": vid,
-        "label": 1,
-        "type": "positive",
-        "shift": 0
-    })
+    for _ in range(3):
+        metadata.append({
+            "video_id": vid,
+            "audio_id": vid,
+            "label": 1,
+            "type": "positive",
+            "shift": 0
+        })
 
-    # cross-video negative (different video, different class)
     neg_pool = [v for v in video_ids if v != vid]
     neg_vid = random.choice(neg_pool)
 

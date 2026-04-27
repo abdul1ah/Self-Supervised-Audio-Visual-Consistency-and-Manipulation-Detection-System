@@ -5,7 +5,7 @@ class AudioVisualLoss(nn.Module):
     def __init__(self):
         super(AudioVisualLoss, self).__init__()
         
-        self.criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([3.0]))
+        self.criterion = nn.BCEWithLogitsLoss()
 
     def forward(self, predictions, labels):
         labels = labels.view(-1, 1).float()

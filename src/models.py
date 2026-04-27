@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import torchvision.models.video as video_models
 
 
 class VisualEncoder(nn.Module):
@@ -32,33 +33,47 @@ class AudioEncoder(nn.Module):
 
 
 class AudioVisualFusion(nn.Module):
-    def __init__(self, embed_dim=256):
+    def __init__(self):
         super(AudioVisualFusion, self).__init__()
         
-        self.visual_encoder = VisualEncoder(embed_dim=embed_dim)
-        self.audio_encoder = AudioEncoder(embed_dim=embed_dim)
+        self.visual_encoder = video_models.r3d_18(weights=video_models.R3D_18_Weights.DEFAULT)
+        self.visual_encoder.fc = nn.Identity()
         
-        fusion_dim = embed_dim * 3
-        
-        self.classifier = nn.Sequential(
-            nn.Linear(fusion_dim, 512),
+        for name, param in self.visual_encoder.named_parameters():
+            if "layer4" in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+
+        self.audio_encoder = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        self.audio_encoder.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.audio_encoder.fc = nn.Identity()
+
+        for name, param in self.audio_encoder.named_parameters():
+            if "conv1" in name or "layer4" in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
+
+
+        self.fusion_head = nn.Sequential(
+            nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.4),
+            
             nn.Linear(512, 128),
+            nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.Dropout(0.3),
+            nn.Dropout(0.4),
+            
             nn.Linear(128, 1)
         )
 
-    def forward(self, visual_input, audio_input):
-        v_features = self.visual_encoder(visual_input)
-        a_features = self.audio_encoder(audio_input)
+    def forward(self, visual, audio):
+        v_features = self.visual_encoder(visual)
+        a_features = self.audio_encoder(audio)
         
-        diff_features = torch.abs(v_features - a_features)
-        
-        fused_features = torch.cat((v_features, a_features, diff_features), dim=1)
-
-        logits = self.classifier(fused_features)
-        
+        combined = torch.cat((v_features, a_features), dim=1)
+        logits = self.fusion_head(combined)
         return logits
