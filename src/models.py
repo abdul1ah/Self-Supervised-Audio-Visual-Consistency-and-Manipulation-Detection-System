@@ -3,42 +3,13 @@ import torch.nn as nn
 import torchvision.models as models
 import torchvision.models.video as video_models
 
-
-class VisualEncoder(nn.Module):
-    def __init__(self, embed_dim=256):
-        super(VisualEncoder, self).__init__()
-        
-        self.backbone = models.video.r3d_18(weights=models.video.R3D_18_Weights.DEFAULT)
-        
-        in_features = self.backbone.fc.in_features
-        self.backbone.fc = nn.Linear(in_features, embed_dim)
-
-    def forward(self, x):
-        return self.backbone(x)
-
-
-class AudioEncoder(nn.Module):
-    def __init__(self, embed_dim=256):
-        super(AudioEncoder, self).__init__()
-        self.backbone = models.resnet18(weights=None) 
-        
-        self.backbone.conv1 = nn.Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        
-        in_features = self.backbone.fc.in_features
-        self.backbone.fc = nn.Linear(in_features, embed_dim)
-
-    def forward(self, x):
-
-        return self.backbone(x)
-
-
 class AudioVisualFusion(nn.Module):
     def __init__(self):
         super(AudioVisualFusion, self).__init__()
-        
+
         self.visual_encoder = video_models.r3d_18(weights=video_models.R3D_18_Weights.DEFAULT)
         self.visual_encoder.fc = nn.Identity()
-        
+
         for name, param in self.visual_encoder.named_parameters():
             if "layer4" in name:
                 param.requires_grad = True
@@ -46,15 +17,16 @@ class AudioVisualFusion(nn.Module):
                 param.requires_grad = False
 
         self.audio_encoder = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        
+        old_conv_weight = self.audio_encoder.conv1.weight.clone()
         self.audio_encoder.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        with torch.no_grad():
+            self.audio_encoder.conv1.weight = nn.Parameter(old_conv_weight.mean(dim=1, keepdim=True))
+
         self.audio_encoder.fc = nn.Identity()
 
-        for name, param in self.audio_encoder.named_parameters():
-            if "conv1" in name or "layer4" in name:
-                param.requires_grad = True
-            else:
-                param.requires_grad = False
-
+        for param in self.audio_encoder.parameters():
+            param.requires_grad = True
 
         self.fusion_head = nn.Sequential(
             nn.Linear(1024, 512),

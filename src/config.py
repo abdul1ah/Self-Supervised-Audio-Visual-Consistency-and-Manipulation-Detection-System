@@ -36,7 +36,7 @@ TARGET_AUDIO_STEPS = 313
 # ==============================================================================
 BATCH_SIZE = 8             
 ACCUMULATION_STEPS = 4       
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-5
 EPOCHS = 30
 NUM_WORKERS = 2 
 
