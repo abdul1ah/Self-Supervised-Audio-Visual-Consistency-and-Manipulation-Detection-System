@@ -1,7 +1,6 @@
 import os
 
-
-RAVDESS_DIR = "/kaggle/input/ravdess-emotional-speech-video"
+RAVDESS_DIR = "/kaggle/input/datasets/orvile/ravdess-dataset"
 OUTPUT_DIR = "/kaggle/working"
 
 CHECKPOINT_DIR = os.path.join(OUTPUT_DIR, "checkpoints")
