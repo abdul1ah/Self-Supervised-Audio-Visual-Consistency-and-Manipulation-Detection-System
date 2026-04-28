@@ -9,6 +9,11 @@ from models import AudioVisualFusion
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_curve
+from config import CHECKPOINT_DIR, ARTIFACTS_DIR
+import matplotlib.pyplot as plt
+
+model_path = os.path.join(CHECKPOINT_DIR, "best_model.pth")
+model.load_state_dict(torch.load(model_path))
 
 def main():
 

@@ -4,7 +4,7 @@ import random
 import glob
 
 # minimum frames required for a video to be included in the dataset
-MIN_FRAMES = 5   
+MIN_FRAMES = 45   
 random.seed(42)
 
 # load original dataset

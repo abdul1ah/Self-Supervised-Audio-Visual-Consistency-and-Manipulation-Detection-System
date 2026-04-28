@@ -1,30 +1,33 @@
 import os
 
-# ==============================================================================
-# PATH CONFIGURATION
-# ==============================================================================
-DRIVE_ROOT = '/content/drive/MyDrive/DNN_Project'
+# --- KAGGLE DIRECTORIES ---
+# Replace 'vggsound-lipsync-sanity-check' with whatever you named your dataset
+INPUT_DIR = "/kaggle/input/vggsound-lipsync-sanity-check" 
+OUTPUT_DIR = "/kaggle/working"
 
-DATA_DIR = '/content/local_dataset' 
+FRAMES_DIR = os.path.join(INPUT_DIR, "frames")
+SPECTROGRAMS_DIR = os.path.join(INPUT_DIR, "spectrograms")
+METADATA_PATH = os.path.join(INPUT_DIR, "metadata.csv")
+AUDIO_DIR = os.path.join(INPUT_DIR, "audio")
 
-AUDIO_DIR = os.path.join(DATA_DIR, 'audio')
-FRAMES_DIR = os.path.join(DATA_DIR, 'frames')
-SPECTROGRAMS_DIR = os.path.join(DATA_DIR, 'spectrograms')
-METADATA_CSV = os.path.join(DATA_DIR, 'metadata.csv')
 
-CHECKPOINT_DIR = os.path.join(DRIVE_ROOT, 'checkpoints')
+CHECKPOINT_DIR = os.path.join(OUTPUT_DIR, "checkpoints")
+ARTIFACTS_DIR = os.path.join(OUTPUT_DIR, "artifacts")
+
+# Ensure the output folders actually exist before the script runs
 os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
-TRAIN_CSV = os.path.join(DATA_DIR, 'train_metadata.csv')
-VAL_CSV = os.path.join(DATA_DIR, 'val_metadata.csv')
-TEST_CSV = os.path.join(DATA_DIR, 'test_metadata.csv')
+TRAIN_CSV = os.path.join(INPUT_DIR, 'train_metadata.csv')
+VAL_CSV = os.path.join(INPUT_DIR, 'val_metadata.csv')
+TEST_CSV = os.path.join(INPUT_DIR, 'test_metadata.csv')
 
 
 # ==============================================================================
 # DATASET PARAMETERS
 # ==============================================================================
-MIN_FRAMES = 5
-TARGET_FRAME_SIZE = (224, 224)   
+MIN_FRAMES = 45
+TARGET_FRAME_SIZE = (112, 112)   
 NUM_MEL_BINS = 128               
 AUDIO_SAMPLE_RATE = 16000
 
@@ -32,7 +35,7 @@ AUDIO_SAMPLE_RATE = 16000
 # ==============================================================================
 # TRAINING HYPERPARAMETERS
 # ==============================================================================
-BATCH_SIZE = 32
+BATCH_SIZE = 2
 LEARNING_RATE = 1e-4
 EPOCHS = 30
 NUM_WORKERS = 2 
