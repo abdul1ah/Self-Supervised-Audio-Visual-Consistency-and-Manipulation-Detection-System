@@ -36,8 +36,8 @@ def main():
     print(f"Starting training on device: {device}\n")
 
     print("Loading DataLoaders...")
-    train_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=True, is_train=True)
-    val_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=False, is_train=False)
+    train_loader = get_dataloader(PREPROCESSED_DIR, batch_size=BATCH_SIZE, shuffle=True, is_train=True)
+    val_loader = get_dataloader(PREPROCESSED_DIR, batch_size=BATCH_SIZE, shuffle=False, is_train=False)
     
     model = AudioVisualFusion()
     if torch.cuda.device_count() > 1:
@@ -48,7 +48,7 @@ def main():
     criterion = AudioVisualLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    scaler = torch.cuda.amp.GradScaler()
+    scaler = torch.amp.GradScaler('cuda')
 
     best_val_loss = float('inf')
 

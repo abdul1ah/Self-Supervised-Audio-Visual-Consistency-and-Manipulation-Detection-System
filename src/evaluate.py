@@ -19,7 +19,7 @@ def main():
         raise FileNotFoundError(f"No saved model found at {checkpoint_path}. Run train.py first!")
 
     print("Loading Test DataLoader...")
-    test_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=False,is_train=False)
+    test_loader = get_dataloader(PREPROCESSED_DIR, batch_size=BATCH_SIZE, shuffle=False,is_train=False)
     
     model = AudioVisualFusion()
 
