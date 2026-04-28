@@ -70,10 +70,11 @@ def main():
 
             train_loss += loss.item()
             
-            # Store labels and probabilities for metric calculation
-            probs = torch.sigmoid(logits).detach().cpu().numpy()
-            train_all_probs.extend(probs)
-            train_all_labels.extend(labels.cpu().numpy())
+            probs = torch.sigmoid(logits).squeeze().detach().cpu().numpy()
+            train_all_probs.extend(probs.tolist() if probs.ndim > 0 else [probs.item()])
+            
+            flat_labels = labels.squeeze().cpu().numpy()
+            train_all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
             
             loop.set_postfix(loss=loss.item())
 
@@ -103,9 +104,11 @@ def main():
 
                 val_loss += loss.item()
                 
-                probs = torch.sigmoid(logits).cpu().numpy()
-                val_all_probs.extend(probs)
-                val_all_labels.extend(labels.cpu().numpy())
+                probs = torch.sigmoid(logits).squeeze().cpu().numpy()
+                val_all_probs.extend(probs.tolist() if probs.ndim > 0 else [probs.item()])
+                
+                flat_labels = labels.squeeze().cpu().numpy()
+                val_all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
 
         avg_val_loss = val_loss / len(val_loader)
         
@@ -114,7 +117,6 @@ def main():
             np.array(val_all_labels), np.array(val_all_probs)
         )
 
-        # EPOCH SUMMARY & CHECKPOINTING
         print(f"TRAIN | Loss: {avg_train_loss:.4f} | Acc: {train_acc:.4f} | Prec: {train_prec:.4f} | Rec: {train_rec:.4f} | F1: {train_f1:.4f} | AUC: {train_auc:.4f}")
         print(f"VAL   | Loss: {avg_val_loss:.4f} | Acc: {val_acc:.4f} | Prec: {val_prec:.4f} | Rec: {val_rec:.4f} | F1: {val_f1:.4f} | AUC: {val_auc:.4f}")
 
@@ -125,6 +127,9 @@ def main():
             print(f"Validation Loss improved! Saved snapshot to {save_path}")
         else:
             print("Validation Loss did not improve.")
+            
+        latest_path = os.path.join(CHECKPOINT_DIR, 'latest_model.pth')
+        torch.save(model.state_dict(), latest_path)
 
 if __name__ == "__main__":
     main()

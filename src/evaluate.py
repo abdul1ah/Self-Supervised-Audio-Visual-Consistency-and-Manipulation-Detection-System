@@ -3,20 +3,14 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, roc_auc_score, confusion_matrix
-from config import *
-from dataset import get_dataloader
-from models import AudioVisualFusion
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import roc_curve
-from config import CHECKPOINT_DIR, ARTIFACTS_DIR
-import matplotlib.pyplot as plt
-
-model_path = os.path.join(CHECKPOINT_DIR, "best_model.pth")
-model.load_state_dict(torch.load(model_path))
+from config import *
+from dataset import get_dataloader
+from models import AudioVisualFusion
 
 def main():
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Starting Evaluation on device: {device}\n")
 
@@ -24,18 +18,13 @@ def main():
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"No saved model found at {checkpoint_path}. Run train.py first!")
 
-
     print("Loading Test DataLoader...")
-
     test_loader = get_dataloader(TEST_CSV, batch_size=BATCH_SIZE, shuffle=False)
     
-
     model = AudioVisualFusion().to(device)
 
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
-    
     model.eval()
-
 
     all_labels = []
     all_probs = []
@@ -51,9 +40,11 @@ def main():
 
             logits = model(visual_batch, audio_batch)
             
-            probs = torch.sigmoid(logits).cpu().numpy()            
-            all_probs.extend(probs)
-            all_labels.extend(labels.cpu().numpy())
+            probs = torch.sigmoid(logits).squeeze().cpu().numpy()            
+            all_probs.extend(probs.tolist() if probs.ndim > 0 else [probs.item()])
+            
+            flat_labels = labels.squeeze().cpu().numpy()
+            all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
 
     all_labels = np.array(all_labels)
     all_probs = np.array(all_probs)
@@ -71,7 +62,6 @@ def main():
 
     cm = confusion_matrix(all_labels, all_preds)
     true_negatives, false_positives, false_negatives, true_positives = cm.ravel()
-
 
     print("\n" + "="*50)
     print("FINAL EVALUATION METRICS")
@@ -103,7 +93,7 @@ def main():
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
     
-    roc_path = os.path.join(CHECKPOINT_DIR, 'roc_curve.png')
+    roc_path = os.path.join(ARTIFACTS_DIR, 'roc_curve.png')
     plt.savefig(roc_path, bbox_inches='tight')
     plt.close()
     
@@ -113,11 +103,11 @@ def main():
                 yticklabels=['Actual: Mismatch', 'Actual: Match'])
     plt.title('Confusion Matrix')
     
-    cm_path = os.path.join(CHECKPOINT_DIR, 'confusion_matrix.png')
+    cm_path = os.path.join(ARTIFACTS_DIR, 'confusion_matrix.png')
     plt.savefig(cm_path, bbox_inches='tight')
     plt.close()
 
-    print(f"Visuals saved to Drive inside the checkpoints folder!")
+    print(f"Visuals saved to the Kaggle working/artifacts directory!")
 
 if __name__ == "__main__":
     main()
