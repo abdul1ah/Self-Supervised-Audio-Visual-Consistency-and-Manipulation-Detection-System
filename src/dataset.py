@@ -44,11 +44,14 @@ class RAVDESSDataset(Dataset):
         video = torch.from_numpy(video).float() / 255.0
         video = video.permute(1, 0, 2, 3)
 
-        audio = torch.from_numpy(np.load(os.path.join(folder, "audio.npy")))
-
-        if label == 0:
-            shift = random.randint(16000, 32000)
-            audio = torch.roll(audio, shifts=shift, dims=1)
+        if label == 1:
+            audio = torch.from_numpy(np.load(os.path.join(folder, "audio.npy")))
+        else:
+            random_folder = random.choice(self.folders)
+            while random_folder == folder:
+                random_folder = random.choice(self.folders)
+            
+            audio = torch.from_numpy(np.load(os.path.join(random_folder, "audio.npy")))
 
         spectrogram = self.mel_transform(audio)
         spectrogram = torch.log(spectrogram + 1e-9)
