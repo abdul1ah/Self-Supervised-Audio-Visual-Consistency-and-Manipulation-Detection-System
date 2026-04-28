@@ -1,6 +1,6 @@
 import os
 
-INPUT_DIR = "/kaggle/input/VGGSound-Sanity-Check/content/drive/MyDrive/DNN_Project/dataset"
+INPUT_DIR = "/kaggle/input/datasets/mabashf/vggsound-sanity-check/content/drive/MyDrive/DNN_Project/dataset"
 OUTPUT_DIR = "/kaggle/working"
 
 FRAMES_DIR = os.path.join(INPUT_DIR, "frames")
