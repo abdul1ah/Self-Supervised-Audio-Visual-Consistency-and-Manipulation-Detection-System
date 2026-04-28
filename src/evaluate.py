@@ -21,9 +21,15 @@ def main():
     print("Loading Test DataLoader...")
     test_loader = get_dataloader(TEST_CSV, batch_size=BATCH_SIZE, shuffle=False)
     
-    model = AudioVisualFusion().to(device)
+    model = AudioVisualFusion()
 
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+    
+    if torch.cuda.device_count() > 1:
+        print(f"Evaluation utilizing {torch.cuda.device_count()} GPUs!")
+        model = torch.nn.DataParallel(model)
+        
+    model = model.to(device)
     model.eval()
 
     all_labels = []
@@ -38,7 +44,8 @@ def main():
             audio_batch = audio_batch.to(device)
             labels = labels.to(device)
 
-            logits = model(visual_batch, audio_batch)
+            with torch.cuda.amp.autocast():
+                logits = model(visual_batch, audio_batch)
             
             probs = torch.sigmoid(logits).squeeze().cpu().numpy()            
             all_probs.extend(probs.tolist() if probs.ndim > 0 else [probs.item()])
@@ -61,7 +68,12 @@ def main():
         roc_auc = 0.0
 
     cm = confusion_matrix(all_labels, all_preds)
-    true_negatives, false_positives, false_negatives, true_positives = cm.ravel()
+    
+    if cm.size == 4:
+        true_negatives, false_positives, false_negatives, true_positives = cm.ravel()
+    else:
+        true_negatives, false_positives, false_negatives, true_positives = 0, 0, 0, 0
+        print("Warning: Confusion matrix is not 2x2. Test set might be missing a class.")
 
     print("\n" + "="*50)
     print("FINAL EVALUATION METRICS")
@@ -81,21 +93,24 @@ def main():
 
     print("Generating visual plots...")
     
-    fpr, tpr, thresholds = roc_curve(all_labels, all_probs)
-    plt.figure(figsize=(8, 6))
+    if len(np.unique(all_labels)) > 1:
+        fpr, tpr, thresholds = roc_curve(all_labels, all_probs)
+        plt.figure(figsize=(8, 6))
 
-    plt.plot(fpr, tpr, label=f'Model ROC (AUC = {roc_auc:.4f})', linewidth=2)
-    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
-    
-    plt.xlabel('False Positive Rate (Mistaking a Mismatch for a Match)')
-    plt.ylabel('True Positive Rate (Successfully finding a Match)')
-    plt.title('Receiver Operating Characteristic (ROC) Curve')
-    plt.legend(loc="lower right")
-    plt.grid(alpha=0.3)
-    
-    roc_path = os.path.join(ARTIFACTS_DIR, 'roc_curve.png')
-    plt.savefig(roc_path, bbox_inches='tight')
-    plt.close()
+        plt.plot(fpr, tpr, label=f'Model ROC (AUC = {roc_auc:.4f})', linewidth=2)
+        plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
+        
+        plt.xlabel('False Positive Rate (Mistaking a Mismatch for a Match)')
+        plt.ylabel('True Positive Rate (Successfully finding a Match)')
+        plt.title('Receiver Operating Characteristic (ROC) Curve')
+        plt.legend(loc="lower right")
+        plt.grid(alpha=0.3)
+        
+        roc_path = os.path.join(ARTIFACTS_DIR, 'roc_curve.png')
+        plt.savefig(roc_path, bbox_inches='tight')
+        plt.close()
+    else:
+        print("Skipped ROC Curve generation (only one class present in test set).")
     
     plt.figure(figsize=(6, 5))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
