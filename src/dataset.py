@@ -12,10 +12,21 @@ from config import *
 class RAVDESSDataset(Dataset):
     def __init__(self, preprocessed_dir, is_train=True):
         self.preprocessed_dir = preprocessed_dir
-        self.folders = sorted(glob.glob(os.path.join(self.preprocessed_dir, "*")))
+        all_folders = glob.glob(os.path.join(self.preprocessed_dir, "*"))
         
-        split = int(len(self.folders) * 0.8)
-        self.folders = self.folders[:split] if is_train else self.folders[split:]
+        train_folders = []
+        val_folders = []
+        
+        for folder in all_folders:
+            folder_name = os.path.basename(folder)
+            actor_id = int(folder_name.split("-")[-1])
+            
+            if actor_id <= 19:
+                train_folders.append(folder)
+            else:
+                val_folders.append(folder)
+                
+        self.folders = train_folders if is_train else val_folders
         
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=AUDIO_SAMPLE_RATE, n_mels=NUM_MEL_BINS, n_fft=2048, hop_length=512
