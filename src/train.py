@@ -28,7 +28,6 @@ def calculate_epoch_metrics(all_labels, all_probs):
     return acc, precision, recall, f1, roc_auc
 
 def main():
-
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Starting training on device: {device}\n")
 
@@ -36,39 +35,50 @@ def main():
     train_loader = get_dataloader(TRAIN_CSV, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = get_dataloader(VAL_CSV, batch_size=BATCH_SIZE, shuffle=False)
     
-    model = AudioVisualFusion().to(device)
+    model = AudioVisualFusion()
+    if torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs!")
+        model = torch.nn.DataParallel(model)
+    model = model.to(device)
+
     criterion = AudioVisualLoss().to(device)
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
+    scaler = torch.cuda.amp.GradScaler()
+
     best_val_loss = float('inf')
-    
-    # THE MAIN LOOP
+
     for epoch in range(1, EPOCHS + 1):
         print(f"\n========== EPOCH {epoch}/{EPOCHS} ==========")
-        
-        # TRAINING PHASE
+
         model.train() 
         train_loss = 0.0
         
-        # Arrays to store every prediction and label for the epoch
         train_all_labels = []
         train_all_probs = []
         
+        optimizer.zero_grad()
+        
         loop = tqdm(train_loader, leave=False, desc="Training")
-        for visual_batch, audio_batch, labels in loop:
+        for i, (visual_batch, audio_batch, labels) in enumerate(loop):
             visual_batch = visual_batch.to(device)
             audio_batch = audio_batch.to(device)
             labels = labels.to(device)
 
-            optimizer.zero_grad()
+            with torch.cuda.amp.autocast():
+                logits = model(visual_batch, audio_batch)
+                loss = criterion(logits, labels)
 
-            logits = model(visual_batch, audio_batch)
-            loss = criterion(logits, labels)
-            
-            loss.backward()
-            optimizer.step()
+                loss = loss / ACCUMULATION_STEPS
 
-            train_loss += loss.item()
+            scaler.scale(loss).backward()
+
+            if ((i + 1) % ACCUMULATION_STEPS == 0) or (i + 1 == len(train_loader)):
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
+
+            train_loss += (loss.item() * ACCUMULATION_STEPS)
             
             probs = torch.sigmoid(logits).squeeze().detach().cpu().numpy()
             train_all_probs.extend(probs.tolist() if probs.ndim > 0 else [probs.item()])
@@ -76,19 +86,15 @@ def main():
             flat_labels = labels.squeeze().cpu().numpy()
             train_all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
             
-            loop.set_postfix(loss=loss.item())
+            loop.set_postfix(loss=(loss.item() * ACCUMULATION_STEPS))
 
         avg_train_loss = train_loss / len(train_loader)
-        
-        # Calculate Advanced Training Metrics
         train_acc, train_prec, train_rec, train_f1, train_auc = calculate_epoch_metrics(
             np.array(train_all_labels), np.array(train_all_probs)
         )
 
-        # VALIDATION PHASE
         model.eval() 
         val_loss = 0.0
-        
         val_all_labels = []
         val_all_probs = []
         
@@ -99,8 +105,9 @@ def main():
                 audio_batch = audio_batch.to(device)
                 labels = labels.to(device)
 
-                logits = model(visual_batch, audio_batch)
-                loss = criterion(logits, labels)
+                with torch.cuda.amp.autocast():
+                    logits = model(visual_batch, audio_batch)
+                    loss = criterion(logits, labels)
 
                 val_loss += loss.item()
                 
@@ -111,8 +118,6 @@ def main():
                 val_all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
 
         avg_val_loss = val_loss / len(val_loader)
-        
-        # Calculate Advanced Validation Metrics
         val_acc, val_prec, val_rec, val_f1, val_auc = calculate_epoch_metrics(
             np.array(val_all_labels), np.array(val_all_probs)
         )
@@ -122,14 +127,17 @@ def main():
 
         if avg_val_loss < best_val_loss:
             best_val_loss = avg_val_loss
+    
+            state_dict = model.module.state_dict() if isinstance(model, torch.nn.DataParallel) else model.state_dict()
             save_path = os.path.join(CHECKPOINT_DIR, 'best_model.pth')
-            torch.save(model.state_dict(), save_path)
+            torch.save(state_dict, save_path)
             print(f"Validation Loss improved! Saved snapshot to {save_path}")
         else:
             print("Validation Loss did not improve.")
             
         latest_path = os.path.join(CHECKPOINT_DIR, 'latest_model.pth')
-        torch.save(model.state_dict(), latest_path)
+        state_dict = model.module.state_dict() if isinstance(model, torch.nn.DataParallel) else model.state_dict()
+        torch.save(state_dict, latest_path)
 
 if __name__ == "__main__":
     main()

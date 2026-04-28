@@ -34,7 +34,8 @@ TARGET_AUDIO_STEPS = 313
 # ==============================================================================
 # TRAINING HYPERPARAMETERS
 # ==============================================================================
-BATCH_SIZE = 32
+BATCH_SIZE = 8             
+ACCUMULATION_STEPS = 4       
 LEARNING_RATE = 1e-4
 EPOCHS = 30
 NUM_WORKERS = 2 
