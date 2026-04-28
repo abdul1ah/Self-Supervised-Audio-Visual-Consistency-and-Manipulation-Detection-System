@@ -32,7 +32,7 @@ def main():
     print(f"Starting training on device: {device}\n")
 
     print("Loading DataLoaders...")
-    train_loader = get_dataloader(TRAIN_CSV, batch_size=BATCH_SIZE, shuffle=False)
+    train_loader = get_dataloader(TRAIN_CSV, batch_size=BATCH_SIZE, shuffle=True)
     val_loader = get_dataloader(VAL_CSV, batch_size=BATCH_SIZE, shuffle=False)
     
     model = AudioVisualFusion()
@@ -68,9 +68,15 @@ def main():
             with torch.cuda.amp.autocast():
                 logits = model(visual_batch, audio_batch)
                 loss = criterion(logits, labels)
+
                 loss = loss / ACCUMULATION_STEPS
 
             scaler.scale(loss).backward()
+
+            if ((i + 1) % ACCUMULATION_STEPS == 0) or (i + 1 == len(train_loader)):
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
 
             train_loss += (loss.item() * ACCUMULATION_STEPS)
             
@@ -81,12 +87,6 @@ def main():
             train_all_labels.extend(flat_labels.tolist() if flat_labels.ndim > 0 else [flat_labels.item()])
             
             loop.set_postfix(loss=(loss.item() * ACCUMULATION_STEPS))
-
-            if ((i + 1) % ACCUMULATION_STEPS == 0) or (i + 1 == len(train_loader)):
-                scaler.step(optimizer)
-                scaler.update()
-                optimizer.zero_grad()
-                break
 
         avg_train_loss = train_loss / len(train_loader)
         train_acc, train_prec, train_rec, train_f1, train_auc = calculate_epoch_metrics(
