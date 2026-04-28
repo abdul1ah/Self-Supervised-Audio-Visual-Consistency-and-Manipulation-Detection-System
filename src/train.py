@@ -28,12 +28,16 @@ def calculate_epoch_metrics(all_labels, all_probs):
     return acc, precision, recall, f1, roc_auc
 
 def main():
+
+    os.makedirs(CHECKPOINT_DIR, exist_ok=True)
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"Starting training on device: {device}\n")
 
     print("Loading DataLoaders...")
-    train_loader = get_dataloader(TRAIN_CSV, batch_size=BATCH_SIZE, shuffle=True)
-    val_loader = get_dataloader(VAL_CSV, batch_size=BATCH_SIZE, shuffle=False)
+    train_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=True, is_train=True)
+    val_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=False, is_train=False)
     
     model = AudioVisualFusion()
     if torch.cuda.device_count() > 1:
@@ -65,7 +69,7 @@ def main():
             audio_batch = audio_batch.to(device)
             labels = labels.to(device)
 
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast(device_type='cuda'):
                 logits = model(visual_batch, audio_batch)
                 loss = criterion(logits, labels)
 
@@ -105,7 +109,7 @@ def main():
                 audio_batch = audio_batch.to(device)
                 labels = labels.to(device)
 
-                with torch.cuda.amp.autocast():
+                with torch.amp.autocast(device_type='cuda'):
                     logits = model(visual_batch, audio_batch)
                     loss = criterion(logits, labels)
 

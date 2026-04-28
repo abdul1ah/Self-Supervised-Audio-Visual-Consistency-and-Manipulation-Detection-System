@@ -7,20 +7,20 @@ print(df.head())
 print(df.columns)
 print(df['label'].value_counts().head(20))
 
-## selecting the classes we want to use for training
+
 selected_classes = [
-    "playing electric guitar",
-    "playing acoustic guitar",
+    "male speech, man speaking",
+    "female speech, woman speaking",
+    "hammering nails",
+    "chopping wood",
+    "people clapping",
+    "basketball bounce",
+    "door slamming",
+    "typing on computer keyboard",
     "playing piano",
-    "playing violin, fiddle",
-    "playing cello",
-    "playing bass guitar",
-    "engine accelerating, revving, vroom",
-    "police car (siren)",
-    "toilet flushing",
-    "bird chirping, tweeting",
-    "chicken crowing",
-    "male speech, man speaking"
+    "playing acoustic guitar",
+    "playing drum kit",
+    "playing tennis" 
 ]
 
 ## filtering the dataset to include only the selected classes and 

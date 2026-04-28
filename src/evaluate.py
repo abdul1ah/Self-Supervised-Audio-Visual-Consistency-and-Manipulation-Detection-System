@@ -19,7 +19,7 @@ def main():
         raise FileNotFoundError(f"No saved model found at {checkpoint_path}. Run train.py first!")
 
     print("Loading Test DataLoader...")
-    test_loader = get_dataloader(TEST_CSV, batch_size=BATCH_SIZE, shuffle=False)
+    test_loader = get_dataloader(RAVDESS_DIR, batch_size=BATCH_SIZE, shuffle=False,is_train=False)
     
     model = AudioVisualFusion()
 
@@ -44,7 +44,7 @@ def main():
             audio_batch = audio_batch.to(device)
             labels = labels.to(device)
 
-            with torch.cuda.amp.autocast():
+            with torch.amp.autocast(device_type='cuda'):
                 logits = model(visual_batch, audio_batch)
             
             probs = torch.sigmoid(logits).squeeze().cpu().numpy()            

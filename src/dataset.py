@@ -1,82 +1,123 @@
 import os
+import glob
+import random
 import torch
-import numpy as np
-import pandas as pd
-from PIL import Image
+import torchaudio
+import torchvision
+import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 from config import *
 
-class AudioVisualDataset(Dataset):
-    def __init__(self, metadata_path):
+class RAVDESSDataset(Dataset):
+    def __init__(self, data_dir, frames_per_clip=45, is_train=True):
         """
-        Args:
-            metadata_path (str): Path to the metadata.csv file.
+        Dynamically loads MP4 files, extracts video/audio, and generates synthetic mismatches.
         """
-        self.metadata = pd.read_csv(metadata_path)
+        super().__init__()
+        self.frames_per_clip = frames_per_clip
+
+        search_pattern = os.path.join(data_dir, "**", "01-*.mp4")
+        all_files = glob.glob(search_pattern, recursive=True)
         
-        self.transform = transforms.Compose([
-            transforms.Resize(TARGET_FRAME_SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], 
-                                 std=[0.229, 0.224, 0.225])
-        ])
+        if len(all_files) == 0:
+            raise FileNotFoundError(f"No MP4 files found in {data_dir}. Check your path!")
+            
+        all_files.sort()
+        
+        split_idx = int(len(all_files) * 0.8)
+        if is_train:
+            self.files = all_files[:split_idx]
+        else:
+            self.files = all_files[split_idx:]
+            
+        print(f"Loaded {len(self.files)} videos for {'Training' if is_train else 'Validation'}")
+
+        self.mel_transform = torchaudio.transforms.MelSpectrogram(
+            sample_rate=48000,
+            n_mels=128,
+            n_fft=2048,
+            hop_length=512
+        )
 
     def __len__(self):
-        return len(self.metadata)
+        return len(self.files) * 2 
 
     def __getitem__(self, idx):
-        row = self.metadata.iloc[idx]
-        vid_id = row['video_id']
-        aud_id = row['audio_id']
-        label = torch.tensor(row['label'], dtype=torch.float32)
-        shift = int(row['shift'])
 
-        frames = []
-        for i in range(1, 46): 
-            frame_path = os.path.join(FRAMES_DIR, f"{vid_id}_{i:03d}.jpg")
-            if not os.path.exists(frame_path):
-                break
+        actual_idx = idx % len(self.files)
+        video_path = self.files[actual_idx]
+        
+        label = random.choice([0, 1])
+        
+        vframes, aframes, info = torchvision.io.read_video(video_path, pts_unit='sec', output_format='TCHW')
+        
+        video_fps = info.get('video_fps', 30.0)
+        audio_fps = info.get('audio_fps', 48000)
+        
+        total_frames = vframes.shape[0]
+
+        if total_frames <= self.frames_per_clip:
+            start_frame = 0
+        else:
+            start_frame = random.randint(0, total_frames - self.frames_per_clip - 1)
+            
+        end_frame = start_frame + self.frames_per_clip
+        
+        visual_clip = vframes[start_frame:end_frame]
+        
+        visual_clip = visual_clip.float() / 255.0
+        visual_clip = F.interpolate(visual_clip, size=(224, 224), mode='bilinear', align_corners=False)
+        visual_clip = visual_clip.permute(1, 0, 2, 3) 
+        
+        clip_duration_sec = self.frames_per_clip / video_fps
+        audio_samples_needed = int(clip_duration_sec * audio_fps)
+        
+        base_audio_start = int((start_frame / video_fps) * audio_fps)
+        
+        if label == 1:
+            audio_start = base_audio_start
+            audio_clip = aframes[:, audio_start : audio_start + audio_samples_needed]
+            
+        else:
+            shift_direction = random.choice([-1, 1])
+            shift_seconds = random.uniform(0.5, 1.5)
+            shift_samples = int(shift_seconds * audio_fps) * shift_direction
+            
+            audio_start = base_audio_start + shift_samples
+            
+            if audio_start < 0 or (audio_start + audio_samples_needed) > aframes.shape[1]:
+
+                audio_start = random.randint(0, max(0, aframes.shape[1] - audio_samples_needed))
                 
-            img = Image.open(frame_path).convert('RGB')
-            if self.transform:
-                img = self.transform(img)
-            frames.append(img)
+            audio_clip = aframes[:, audio_start : audio_start + audio_samples_needed]
+
+        if audio_clip.shape[1] < audio_samples_needed:
+            padding = audio_samples_needed - audio_clip.shape[1]
+            audio_clip = F.pad(audio_clip, (0, padding))
             
-        while len(frames) < MIN_FRAMES:
-            frames.append(frames[-1] if len(frames) > 0 else torch.zeros(3, TARGET_FRAME_SIZE[0], TARGET_FRAME_SIZE[1]))
+        if audio_clip.shape[0] > 1:
+            audio_clip = torch.mean(audio_clip, dim=0, keepdim=True)
 
-        visual_tensor = torch.stack(frames, dim=1)
+        spectrogram = self.mel_transform(audio_clip)
+        spectrogram = torch.log(spectrogram + 1e-9)
+        
+        spectrogram = spectrogram.unsqueeze(0) 
+        spectrogram = F.interpolate(spectrogram, size=(224, 224), mode='bilinear', align_corners=False)
+        spectrogram = spectrogram.squeeze(0)
 
-        spec_path = os.path.join(SPECTROGRAMS_DIR, f"{aud_id}.npy")
-        full_spectrogram = np.load(spec_path)
+        label_tensor = torch.tensor([label], dtype=torch.float32)
 
-        sliced_audio = full_spectrogram[:, :TARGET_AUDIO_STEPS]
+        return visual_clip, spectrogram, label_tensor
 
-        if sliced_audio.shape[1] < TARGET_AUDIO_STEPS:
-            padding = TARGET_AUDIO_STEPS - sliced_audio.shape[1]
-            sliced_audio = np.pad(sliced_audio, ((0, 0), (0, padding)), mode='constant')
-
-        if shift != 0:
-  
-            shift_columns = int(shift * 7) 
-            
-            sliced_audio = np.roll(sliced_audio, shift=shift_columns, axis=1)
-
-        audio_tensor = torch.tensor(sliced_audio, dtype=torch.float32).unsqueeze(0)
-
-        return visual_tensor, audio_tensor, label
-
-def get_dataloader(csv_path, batch_size=BATCH_SIZE, num_workers=NUM_WORKERS, shuffle=True):
-
-    dataset = AudioVisualDataset(csv_path)
+def get_dataloader(data_dir, batch_size, shuffle, is_train=True):
+    dataset = RAVDESSDataset(data_dir, frames_per_clip=45, is_train=is_train)
     
     dataloader = DataLoader(
         dataset, 
         batch_size=batch_size, 
         shuffle=shuffle, 
-        num_workers=num_workers,
-        pin_memory=True
+        num_workers=2, 
+        pin_memory=True,
+        drop_last=True
     )
-    
     return dataloader
