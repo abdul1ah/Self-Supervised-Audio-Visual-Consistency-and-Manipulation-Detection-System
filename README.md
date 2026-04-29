@@ -46,7 +46,7 @@ a dual-stream architecture.
 ## Setup
 
 ``` bash
-git clone https://github.com/yourusername/Self-Supervised-Audio-Visual-Consistency-and-Manipulation-Detection-System.git
+git clone https://github.com/abdul1ah/Self-Supervised-Audio-Visual-Consistency-and-Manipulation-Detection-System.git
 cd Self-Supervised-Audio-Visual-Consistency-and-Manipulation-Detection-System
 pip install -r requirements
 ```
