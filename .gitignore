@@ -7,8 +7,6 @@ audio/
 frames/
 ##ignore all the spectrograms
 spectrograms/
-*.mp4
-*.mp4.*
 
 *.ini
 */tempCodeRunnerFile.py
@@ -17,5 +15,5 @@ __pycache__/
 *.ipynb_checkpoints
 *.zip
 *.tar.gz
-*.pth
+latest_model.pth
 inference_process.py
