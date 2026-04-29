@@ -12,6 +12,8 @@ from config import *
 class RAVDESSDataset(Dataset):
     def __init__(self, preprocessed_dir, is_train=True):
         self.preprocessed_dir = preprocessed_dir
+        self.is_train = is_train
+        
         all_folders = glob.glob(os.path.join(self.preprocessed_dir, "*"))
         
         train_folders = []
@@ -28,12 +30,18 @@ class RAVDESSDataset(Dataset):
                 
         self.folders = train_folders if is_train else val_folders
         
+        self.actor_to_folders = {}
+        for folder in self.folders:
+            actor_id = os.path.basename(folder).split("-")[-1]
+            if actor_id not in self.actor_to_folders:
+                self.actor_to_folders[actor_id] = []
+            self.actor_to_folders[actor_id].append(folder)
+        
         self.mel_transform = torchaudio.transforms.MelSpectrogram(
             sample_rate=AUDIO_SAMPLE_RATE, n_mels=NUM_MEL_BINS, n_fft=2048, hop_length=512
         )
 
     def __len__(self):
-
         return len(self.folders) * 2
 
     def __getitem__(self, idx):
@@ -44,12 +52,26 @@ class RAVDESSDataset(Dataset):
         video = torch.from_numpy(video).float() / 255.0
         video = video.permute(1, 0, 2, 3)
 
+        if self.is_train:
+            if random.random() > 0.5:
+                video = torch.flip(video, dims=[3]) 
+            
+            brightness_factor = random.uniform(0.8, 1.2)
+            video = video * brightness_factor
+            video = torch.clamp(video, 0.0, 1.0)
+
         if label == 1:
             audio = torch.from_numpy(np.load(os.path.join(folder, "audio.npy")))
         else:
-            random_folder = random.choice(self.folders)
-            while random_folder == folder:
+            actor_id = os.path.basename(folder).split("-")[-1]
+            same_actor_folders = [f for f in self.actor_to_folders[actor_id] if f != folder]
+            
+            if len(same_actor_folders) > 0 and random.random() < 0.8:
+                random_folder = random.choice(same_actor_folders)
+            else:
                 random_folder = random.choice(self.folders)
+                while random_folder == folder:
+                    random_folder = random.choice(self.folders)
             
             audio = torch.from_numpy(np.load(os.path.join(random_folder, "audio.npy")))
 

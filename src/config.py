@@ -2,7 +2,7 @@ import os
 
 RAVDESS_DIR = "/kaggle/input/datasets/orvile/ravdess-dataset"
 OUTPUT_DIR = "/kaggle/working"
-PREPROCESSED_DIR = "/kaggle/temp/ravdess_preprocessed"
+PREPROCESSED_DIR = "/kaggle/input/ravdess-preprocessed-audio-visual/ravdess_preprocessed"
 CHECKPOINT_DIR = os.path.join(OUTPUT_DIR, "checkpoints")
 ARTIFACTS_DIR = os.path.join(OUTPUT_DIR, "artifacts")
 

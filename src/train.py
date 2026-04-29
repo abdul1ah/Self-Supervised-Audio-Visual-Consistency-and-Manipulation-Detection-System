@@ -52,7 +52,7 @@ def main():
 
     scaler = torch.amp.GradScaler('cuda')
 
-    best_val_loss = float('inf')
+    best_val_auc = 0.0
 
     for epoch in range(1, EPOCHS + 1):
         print(f"\n========== EPOCH {epoch}/{EPOCHS} ==========")
@@ -131,15 +131,15 @@ def main():
         print(f"TRAIN | Loss: {avg_train_loss:.4f} | Acc: {train_acc:.4f} | Prec: {train_prec:.4f} | Rec: {train_rec:.4f} | F1: {train_f1:.4f} | AUC: {train_auc:.4f}")
         print(f"VAL   | Loss: {avg_val_loss:.4f} | Acc: {val_acc:.4f} | Prec: {val_prec:.4f} | Rec: {val_rec:.4f} | F1: {val_f1:.4f} | AUC: {val_auc:.4f}")
 
-        if avg_val_loss < best_val_loss:
-            best_val_loss = avg_val_loss
-    
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+
             state_dict = model.module.state_dict() if isinstance(model, torch.nn.DataParallel) else model.state_dict()
             save_path = os.path.join(CHECKPOINT_DIR, 'best_model.pth')
             torch.save(state_dict, save_path)
-            print(f"Validation Loss improved! Saved snapshot to {save_path}")
+            print(f"Validation AUC improved! Saved snapshot to {save_path}")
         else:
-            print("Validation Loss did not improve.")
+            print("Validation AUC did not improve.")
             
         latest_path = os.path.join(CHECKPOINT_DIR, 'latest_model.pth')
         state_dict = model.module.state_dict() if isinstance(model, torch.nn.DataParallel) else model.state_dict()
