@@ -19,3 +19,4 @@ __pycache__/
 *.tar.gz
 *.pth
 *.ipynb
+inference_process.py
