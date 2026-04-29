@@ -46,7 +46,9 @@ def main():
     model = model.to(device)
 
     criterion = AudioVisualLoss().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=3, factor=0.5, verbose=True)
 
     scaler = torch.amp.GradScaler('cuda')
 
@@ -142,6 +144,8 @@ def main():
         latest_path = os.path.join(CHECKPOINT_DIR, 'latest_model.pth')
         state_dict = model.module.state_dict() if isinstance(model, torch.nn.DataParallel) else model.state_dict()
         torch.save(state_dict, latest_path)
+
+        scheduler.step(avg_val_loss)
 
 if __name__ == "__main__":
     main()

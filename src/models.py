@@ -25,19 +25,22 @@ class AudioVisualFusion(nn.Module):
 
         self.audio_encoder.fc = nn.Identity()
 
-        for param in self.audio_encoder.parameters():
-            param.requires_grad = True
+        for name, param in self.audio_encoder.named_parameters():
+            if "layer4" in name or "layer3" in name:
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
 
         self.fusion_head = nn.Sequential(
             nn.Linear(1024, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             
             nn.Linear(512, 128),
             nn.BatchNorm1d(128),
             nn.ReLU(),
-            nn.Dropout(0.4),
+            nn.Dropout(0.5),
             
             nn.Linear(128, 1)
         )
