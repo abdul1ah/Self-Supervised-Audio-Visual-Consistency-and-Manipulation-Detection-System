@@ -18,5 +18,4 @@ __pycache__/
 *.zip
 *.tar.gz
 *.pth
-*.ipynb
 inference_process.py

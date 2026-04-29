@@ -1,0 +1,11 @@
+# Core Machine Learning Framework
+torch
+torchvision
+torchaudio
+
+# Data Processing & Utilities
+numpy
+tqdm
+
+# Real-World Inference Tools
+facenet-pytorch
