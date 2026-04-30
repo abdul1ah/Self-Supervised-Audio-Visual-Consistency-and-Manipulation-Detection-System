@@ -4,10 +4,11 @@ import torchvision.models as models
 import torchvision.models.video as video_models
 
 class AudioVisualFusion(nn.Module):
-    def __init__(self):
+    def __init__(self, pretrained=True):
         super(AudioVisualFusion, self).__init__()
 
-        self.visual_encoder = video_models.r3d_18(weights=video_models.R3D_18_Weights.DEFAULT)
+        v_weights = video_models.R3D_18_Weights.DEFAULT if pretrained else None
+        self.visual_encoder = video_models.r3d_18(weights=v_weights)
         self.visual_encoder.fc = nn.Identity()
 
         for name, param in self.visual_encoder.named_parameters():
@@ -16,7 +17,8 @@ class AudioVisualFusion(nn.Module):
             else:
                 param.requires_grad = False
 
-        self.audio_encoder = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
+        a_weights = models.ResNet18_Weights.DEFAULT if pretrained else None
+        self.audio_encoder = models.resnet18(weights=a_weights)
         
         old_conv_weight = self.audio_encoder.conv1.weight.clone()
         self.audio_encoder.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
