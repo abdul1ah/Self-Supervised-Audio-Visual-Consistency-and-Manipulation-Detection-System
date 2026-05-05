@@ -17,3 +17,6 @@ __pycache__/
 *.tar.gz
 latest_model.pth
 inference_process.py
+
+frontend/node_modules/
+backend/uploads/

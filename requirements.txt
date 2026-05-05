@@ -6,6 +6,13 @@ torchaudio
 # Data Processing & Utilities
 numpy
 tqdm
+opencv-python-headless
+av
 
 # Real-World Inference Tools
 facenet-pytorch
+
+# API
+fastapi
+uvicorn[standard]
+python-multipart
