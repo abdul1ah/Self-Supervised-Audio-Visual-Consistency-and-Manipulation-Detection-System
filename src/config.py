@@ -11,7 +11,7 @@ os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
 MIN_FRAMES = 45
 TARGET_FRAME_SIZE = (224, 224)   
-NUM_MEL_BINS = 128               
+NUM_MEL_BINS = 128              
 
 AUDIO_SAMPLE_RATE = 48000 
 TARGET_AUDIO_STEPS = 224
