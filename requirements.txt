@@ -16,3 +16,9 @@ facenet-pytorch
 fastapi
 uvicorn[standard]
 python-multipart
+python-dotenv
+
+# Agent orchestration
+langchain-core
+langgraph
+langchain-ollama

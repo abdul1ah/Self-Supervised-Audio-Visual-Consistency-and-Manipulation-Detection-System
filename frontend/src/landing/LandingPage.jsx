@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import SceneBackground from "./SceneBackground.jsx";
 import Navbar from "./Navbar.jsx";
 import Hero from "./Hero.jsx";
-import UploadPanel from "./UploadPanel.jsx";
+import ChatAnalyzer from "./ChatAnalyzer.jsx";
 import Footer from "./Footer.jsx";
 
 function SceneFallback() {
@@ -17,7 +17,7 @@ export default function LandingPage() {
       </Suspense>
       <Navbar />
       <Hero />
-      <UploadPanel />
+      <ChatAnalyzer />
       <Footer />
     </>
   );

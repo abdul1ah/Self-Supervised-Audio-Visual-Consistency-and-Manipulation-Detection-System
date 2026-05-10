@@ -20,3 +20,4 @@ inference_process.py
 
 frontend/node_modules/
 backend/uploads/
+backend/.env
