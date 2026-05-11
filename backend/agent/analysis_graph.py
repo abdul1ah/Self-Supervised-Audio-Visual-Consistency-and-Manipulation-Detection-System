@@ -90,17 +90,30 @@ def assess_risk_node(state: AnalysisState) -> AnalysisState:
     issues = state["validation"].get("issues", [])
 
     if issues:
-        risk_level = "needs_review"
-        recommendation = "Fix the input issues before trusting the score."
-    elif probability >= 0.75:
-        risk_level = "high_consistency"
-        recommendation = "The clip looks well aligned."
-    elif probability >= 0.45:
-        risk_level = "uncertain"
-        recommendation = "The result is borderline and could reflect domain shift or weak sync."
+        risk_level = "high"
+        recommendation = (
+            "Warning: input/metadata issues were detected. "
+            "Treat this result as unreliable until the upload is fixed."
+        )
+    elif probability < 0.25:
+        risk_level = "critical"
+        recommendation = (
+            "Very high manipulation risk. The streams appear strongly misaligned; "
+            "review this clip as likely manipulated."
+        )
+    elif probability < 0.50:
+        risk_level = "high"
+        recommendation = (
+            "Rather high risk. The clip may be manipulated or badly out of sync."
+        )
+    elif probability < 0.70:
+        risk_level = "low"
+        recommendation = (
+            "Rather low risk. The audio and visuals look reasonably aligned."
+        )
     else:
-        risk_level = "low_consistency"
-        recommendation = "The clip may contain a mismatch or manipulation."
+        risk_level = "negligible"
+        recommendation = "Negligible risk. The audio and visuals are well aligned."
 
     state["risk_level"] = risk_level
     state["recommendation"] = recommendation

@@ -50,7 +50,7 @@ async def detect_audio_visual_consistency(
 @tool
 def analyze_consistency_score(score: float) -> str:
     """
-    Interpret a consistency score and return a risk assessment.
+    Interpret a match probability and return a risk assessment.
     
     Args:
         score: Match probability from 0.0 to 1.0
@@ -75,7 +75,7 @@ def analyze_consistency_score(score: float) -> str:
         {
             "assessment": assessment,
             "explanation": explanation,
-            "score": score,
+            "match_probability": score,
         }
     )
 

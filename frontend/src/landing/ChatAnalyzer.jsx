@@ -368,7 +368,8 @@ export default function ChatAnalyzer() {
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 marginBottom: "0.35rem",
-                color: "var(--text-muted)",
+                color: "#000",
+                fontWeight: 700,
               }}
             >
               Video Type
@@ -382,8 +383,8 @@ export default function ChatAnalyzer() {
                 padding: "0.6rem",
                 borderRadius: "8px",
                 border: "1px solid var(--border)",
-                background: "var(--bg-default)",
-                color: "var(--text-default)",
+                background: "#FFF",
+                color: "#000",
                 fontSize: "0.9rem",
                 cursor: loading ? "wait" : "pointer",
               }}
@@ -401,7 +402,8 @@ export default function ChatAnalyzer() {
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 marginBottom: "0.35rem",
-                color: "var(--text-muted)",
+                color: "#000",
+                fontWeight: 700,
               }}
             >
               Agent Mode
@@ -415,8 +417,8 @@ export default function ChatAnalyzer() {
                 padding: "0.6rem",
                 borderRadius: "8px",
                 border: "1px solid var(--border)",
-                background: "var(--bg-default)",
-                color: "var(--text-default)",
+                background: "#FFF",
+                color: "#000",
                 fontSize: "0.9rem",
                 cursor: loading ? "wait" : "pointer",
               }}
