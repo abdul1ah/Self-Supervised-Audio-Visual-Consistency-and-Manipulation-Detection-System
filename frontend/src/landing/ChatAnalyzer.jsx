@@ -108,12 +108,14 @@ export default function ChatAnalyzer() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "2rem 1.5rem",
+        padding: "1rem 1.5rem",
         maxWidth: "900px",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        flex: 1,
+        minHeight: 0,
+        height: "100%",
       }}
     >
       {/* Chat Messages Container */}

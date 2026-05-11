@@ -22,3 +22,8 @@ python-dotenv
 langchain-core
 langgraph
 langchain-ollama
+langchain-openai
+
+# HTTP clients
+httpx
+aiohttp
