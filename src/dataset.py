@@ -60,7 +60,7 @@ class RAVDESSDataset(Dataset):
             video = video * brightness_factor
             video = torch.clamp(video, 0.0, 1.0)
 
-        if label == 1:
+    bel == 1:
             audio = torch.from_numpy(np.load(os.path.join(folder, "audio.npy")))
         else:
             actor_id = os.path.basename(folder).split("-")[-1]

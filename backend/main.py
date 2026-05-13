@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.crud.model_loader import get_model
 from backend.routers.analyze import router as analyze_router
 from backend.routers.predict import router as predict_router
 
@@ -36,4 +37,9 @@ app.include_router(analyze_router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    try:
+        model, _ = get_model()
+        total_params = sum(p.numel() for p in model.parameters())
+        return {"status": "ok", "total_parameters": total_params}
+    except Exception as e:
+        return {"status": "ok", "total_parameters": None, "error": str(e)}
